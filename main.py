@@ -3,9 +3,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from statsmodels.tsa.stattools import adfuller
-from statsmodels.tsa.seasonal import seasonal_decompose
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 # ====================== PAGE CONFIG & STYLE ======================
 st.set_page_config(page_title="Income Inequality Forecast - CRISP-DM", layout="wide")
@@ -231,7 +228,7 @@ if menu == "💼 Business Understanding":
 
 # ==================== 2. DATA UNDERSTANDING ====================
 elif menu == "🔍 Data Understanding":
-    st.markdown("# Analisis Kualitas Data - Income Inequality South Africa")
+    st.markdown("# � Analisis Kualitas Data - Income Inequality South Africa")
     st.markdown("*Eksplorasi dan pemahaman karakteristik data*")
     st.markdown("---")
     
@@ -563,237 +560,8 @@ elif menu == "🧹 Data Preparation":
     
     st.markdown("---")
     
-    # ========== STEP 5: Analisis Time Series ==========
-    st.markdown("## 📈 STEP 5: Analisis Time Series")
-    
-    st.markdown("""
-    <div class='highlight-box'>
-        <strong>📌 Penjelasan Step 5:</strong><br>
-        ✓ Menganalisis karakteristik time series dari Gini Coefficient<br>
-        ✓ Melakukan uji stationarity menggunakan Augmented Dickey-Fuller (ADF) Test<br>
-        ✓ Melakukan differencing untuk membuat data stasioner<br>
-        ✓ Dekomposisi time series: Trend, Seasonal, dan Residual<br>
-        ✓ Analisis ACF dan PACF untuk identifikasi pola autokorelasi
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Prepare time series data
-    df_ts = df_filtered[['Year', 'gini_disp']].set_index('Year')
-    
-    # 5.1 Visualisasi Time Series
-    st.subheader("📊 5.1 Visualisasi Time Series - Gini Coefficient")
-    
-    fig, ax = plt.subplots(figsize=(12, 5))
-    ax.plot(df_ts.index, df_ts['gini_disp'], marker='o', color='#00E396', linewidth=2, markersize=6)
-    ax.fill_between(df_ts.index, df_ts['gini_disp'], alpha=0.2, color='#00E396')
-    ax.set_title('Time Series: Gini Dispersion', fontsize=14, fontweight='bold', color='white')
-    ax.set_xlabel('Year', fontsize=12, color='white')
-    ax.set_ylabel('Gini Dispersion', fontsize=12, color='white')
-    ax.set_facecolor('#0E1117')
-    fig.patch.set_facecolor('#0E1117')
-    ax.tick_params(colors='white')
-    ax.grid(True, alpha=0.3)
-    plt.tight_layout()
-    st.pyplot(fig)
-    
-    # 5.2 Statistik Deskriptif
-    st.subheader("📋 5.2 Statistik Deskriptif")
-    
-    col_ts1, col_ts2 = st.columns(2)
-    with col_ts1:
-        desc_stats = df_ts['gini_disp'].describe()
-        st.dataframe(desc_stats.to_frame().T, use_container_width=True)
-    
-    with col_ts2:
-        st.info("""
-        **📊 Interpretasi:**
-        - **Mean**: Rata-rata nilai Gini Coefficient
-        - **Std**: Standar deviasi (volatilitas)
-        - **Min/Max**: Rentang nilai
-        - **25%/50%/75%**: Kuartil distribusi
-        """)
-    
-    # 5.3 Uji Stationarity (ADF Test)
-    st.subheader("🔬 5.3 Uji Stationarity - Augmented Dickey-Fuller (ADF) Test")
-    
-    # Original data ADF test
-    series_clean = df_ts['gini_disp'].replace([np.inf, -np.inf], np.nan).dropna()
-    adf_result = adfuller(series_clean)
-    
-    col_adf1, col_adf2, col_adf3 = st.columns(3)
-    with col_adf1:
-        st.markdown(f"""
-        <div class='metric-card'>
-            <h3>{adf_result[0]:.4f}</h3>
-            <p>ADF Statistic</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col_adf2:
-        st.markdown(f"""
-        <div class='metric-card'>
-            <h3>{adf_result[1]:.4f}</h3>
-            <p>p-value</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col_adf3:
-        is_stationary = adf_result[1] < 0.05
-        status_text = "✅ Stasioner" if is_stationary else "⚠️ Non-Stasioner"
-        status_color = "#00E396" if is_stationary else "#EF4444"
-        st.markdown(f"""
-        <div class='metric-card' style='border: 2px solid {status_color};'>
-            <h3>{status_text}</h3>
-            <p>Status (α=0.05)</p>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Critical values
-    with st.expander("📊 Lihat Critical Values"):
-        cv_df = pd.DataFrame({
-            "Significance Level": ["1%", "5%", "10%"],
-            "Critical Value": [adf_result[4]['1%'], adf_result[4]['5%'], adf_result[4]['10%']]
-        })
-        st.dataframe(cv_df, use_container_width=True, hide_index=True)
-        st.info("""
-        **Interpretasi:**
-        - Jika **ADF Statistic < Critical Value** → Data stasioner
-        - Jika **p-value < 0.05** → Tolak H0, data stasioner
-        - Jika **p-value > 0.05** → Terima H0, data non-stasioner
-        """)
-    
-    # 5.4 Differencing
-    st.subheader("🔄 5.4 Differencing untuk Stationarity")
-    
-    tabs_diff = st.tabs(["1st Differencing", "2nd Differencing"])
-    
-    with tabs_diff[0]:
-        # First differencing
-        df_diff1 = df_ts['gini_disp'].diff().dropna()
-        adf_diff1 = adfuller(df_diff1)
-        
-        col_d1, col_d2 = st.columns(2)
-        with col_d1:
-            st.markdown(f"""
-            **ADF Statistic (1st Diff):** {adf_diff1[0]:.4f}  
-            **p-value:** {adf_diff1[1]:.4f}  
-            **Status:** {'✅ Stasioner' if adf_diff1[1] < 0.05 else '⚠️ Non-Stasioner'}
-            """)
-        
-        with col_d2:
-            fig, ax = plt.subplots(figsize=(8, 4))
-            ax.plot(df_diff1.index, df_diff1, color='#00D1FF', linewidth=2)
-            ax.axhline(y=0, color='#EF4444', linestyle='--', alpha=0.5)
-            ax.set_title('First Differencing', fontsize=12, fontweight='bold', color='white')
-            ax.set_facecolor('#0E1117')
-            fig.patch.set_facecolor('#0E1117')
-            ax.tick_params(colors='white')
-            ax.grid(True, alpha=0.3)
-            plt.tight_layout()
-            st.pyplot(fig)
-    
-    with tabs_diff[1]:
-        # Second differencing
-        df_diff2 = df_diff1.diff().dropna()
-        adf_diff2 = adfuller(df_diff2)
-        
-        col_d1, col_d2 = st.columns(2)
-        with col_d1:
-            st.markdown(f"""
-            **ADF Statistic (2nd Diff):** {adf_diff2[0]:.4f}  
-            **p-value:** {adf_diff2[1]:.4f}  
-            **Status:** {'✅ Stasioner' if adf_diff2[1] < 0.05 else '⚠️ Non-Stasioner'}
-            """)
-        
-        with col_d2:
-            fig, ax = plt.subplots(figsize=(8, 4))
-            ax.plot(df_diff2.index, df_diff2, color='#FEB019', linewidth=2)
-            ax.axhline(y=0, color='#EF4444', linestyle='--', alpha=0.5)
-            ax.set_title('Second Differencing', fontsize=12, fontweight='bold', color='white')
-            ax.set_facecolor('#0E1117')
-            fig.patch.set_facecolor('#0E1117')
-            ax.tick_params(colors='white')
-            ax.grid(True, alpha=0.3)
-            plt.tight_layout()
-            st.pyplot(fig)
-    
-    # 5.5 Dekomposisi Time Series
-    st.subheader("🔍 5.5 Dekomposisi Time Series (Trend, Seasonal, Residual)")
-    
-    try:
-        # Dekomposisi dengan period=1 (no seasonality expected)
-        decomposition = seasonal_decompose(df_ts['gini_disp'], model='additive', period=1)
-        
-        fig, axes = plt.subplots(4, 1, figsize=(12, 10))
-        
-        # Original
-        axes[0].plot(df_ts.index, df_ts['gini_disp'], color='#00E396', linewidth=2)
-        axes[0].set_ylabel('Original', fontsize=10, color='white')
-        axes[0].set_title('Time Series Decomposition', fontsize=14, fontweight='bold', color='white')
-        
-        # Trend
-        axes[1].plot(decomposition.trend.index, decomposition.trend, color='#00D1FF', linewidth=2)
-        axes[1].set_ylabel('Trend', fontsize=10, color='white')
-        
-        # Seasonal
-        axes[2].plot(decomposition.seasonal.index, decomposition.seasonal, color='#FEB019', linewidth=2)
-        axes[2].set_ylabel('Seasonal', fontsize=10, color='white')
-        
-        # Residual
-        axes[3].plot(decomposition.resid.index, decomposition.resid, color='#EF4444', linewidth=2)
-        axes[3].set_ylabel('Residual', fontsize=10, color='white')
-        axes[3].set_xlabel('Year', fontsize=10, color='white')
-        
-        for ax in axes:
-            ax.set_facecolor('#0E1117')
-            ax.tick_params(colors='white')
-            ax.grid(True, alpha=0.3)
-        
-        fig.patch.set_facecolor('#0E1117')
-        plt.tight_layout()
-        st.pyplot(fig)
-        
-        st.info("""
-        **📊 Interpretasi Dekomposisi:**
-        - **Trend**: Pola jangka panjang dalam data
-        - **Seasonal**: Pola berulang dalam periode tertentu
-        - **Residual**: Noise atau variasi acak setelah trend dan seasonal dihilangkan
-        """)
-    except Exception as e:
-        st.warning(f"⚠️ Dekomposisi tidak dapat dilakukan: {str(e)}")
-    
-    # 5.6 ACF dan PACF
-    st.subheader("📉 5.6 Autocorrelation Function (ACF) & Partial ACF (PACF)")
-    
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-    
-    # ACF plot
-    plot_acf(df_diff2, lags=min(20, len(df_diff2)-1), ax=axes[0], color='#00E396')
-    axes[0].set_title('Autocorrelation Function (ACF)', fontsize=12, fontweight='bold', color='white')
-    axes[0].set_facecolor('#0E1117')
-    axes[0].tick_params(colors='white')
-    
-    # PACF plot
-    plot_pacf(df_diff2, lags=min(20, len(df_diff2)-1), ax=axes[1], color='#00D1FF')
-    axes[1].set_title('Partial Autocorrelation Function (PACF)', fontsize=12, fontweight='bold', color='white')
-    axes[1].set_facecolor('#0E1117')
-    axes[1].tick_params(colors='white')
-    
-    fig.patch.set_facecolor('#0E1117')
-    plt.tight_layout()
-    st.pyplot(fig)
-    
-    st.info("""
-    **📊 Interpretasi ACF & PACF:**
-    - **ACF**: Mengukur korelasi antara observasi pada lag berbeda
-    - **PACF**: Mengukur korelasi langsung setelah menghilangkan efek lag sebelumnya
-    - Digunakan untuk menentukan parameter **p** dan **q** dalam model ARIMA
-    """)
-    
-    st.markdown("---")
-    
-    # ========== STEP 6: Visualisasi Outlier ==========
-    st.markdown("## 📊 STEP 6: Visualisasi Outlier Detection")
+    # ========== STEP 5: Visualisasi Outlier ==========
+    st.markdown("## 📊 STEP 5: Visualisasi Outlier Detection")
     
     st.markdown("""
     <div class='highlight-box'>
@@ -1285,4 +1053,3 @@ st.markdown("""
     <small>Double Exponential Smoothing (Holt's Method) | Afrika Selatan Dataset</small>
 </div>
 """, unsafe_allow_html=True)
-
