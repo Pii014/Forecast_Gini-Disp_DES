@@ -231,7 +231,7 @@ if menu == "💼 Business Understanding":
 
 # ==================== 2. DATA UNDERSTANDING ====================
 elif menu == "🔍 Data Understanding":
-    st.markdown("# � Analisis Kualitas Data - Income Inequality South Africa")
+    st.markdown("# Analisis Kualitas Data - Income Inequality South Africa")
     st.markdown("*Eksplorasi dan pemahaman karakteristik data*")
     st.markdown("---")
     
@@ -1285,3 +1285,4 @@ st.markdown("""
     <small>Double Exponential Smoothing (Holt's Method) | Afrika Selatan Dataset</small>
 </div>
 """, unsafe_allow_html=True)
+
