@@ -231,7 +231,7 @@ if menu == "💼 Business Understanding":
 
 # ==================== 2. DATA UNDERSTANDING ====================
 elif menu == "🔍 Data Understanding":
-    st.markdown("# 🔍 Data Understanding")
+    st.markdown("# � Analisis Kualitas Data - Income Inequality South Africa")
     st.markdown("*Eksplorasi dan pemahaman karakteristik data*")
     st.markdown("---")
     
@@ -243,82 +243,38 @@ elif menu == "🔍 Data Understanding":
     </div>
     """, unsafe_allow_html=True)
     
-    # Dataset Overview
-    col1, col2 = st.columns([1, 1])
+    # 1. Preview Data
+    st.header("1. Preview Data")
+    st.dataframe(df_raw.head(5), use_container_width=True, hide_index=True)
     
-    with col1:
-        st.subheader("📋 Preview Data")
-        df_display = df_raw[['Year', 'gini_disp']].copy()
-        df_display.columns = ['Tahun', 'Gini Coefficient']
-        st.dataframe(df_display, use_container_width=True, hide_index=True)
+    # 2. Informasi Data
+    st.header("2. Informasi Data")
+    st.text(f"Jumlah Baris: {df_raw.shape[0]}")
+    st.text(f"Jumlah Kolom: {df_raw.shape[1]}")
+    st.text(f"Kolom: {', '.join(df_raw.columns.tolist())}")
     
-    with col2:
-        st.subheader("📊 Statistik Deskriptif")
-        gini_stats = df_raw['gini_disp'].describe()
-        
-        stats_df = pd.DataFrame({
-            'Statistik': ['Count', 'Mean', 'Std', 'Min', '25%', '50%', '75%', 'Max'],
-            'Nilai': [f"{gini_stats['count']:.0f}", f"{gini_stats['mean']:.4f}", 
-                     f"{gini_stats['std']:.4f}", f"{gini_stats['min']:.4f}",
-                     f"{gini_stats['25%']:.4f}", f"{gini_stats['50%']:.4f}",
-                     f"{gini_stats['75%']:.4f}", f"{gini_stats['max']:.4f}"]
-        })
-        st.dataframe(stats_df, use_container_width=True, hide_index=True)
+    # 3. Statistik Deskriptif
+    st.header("3. Statistik Deskriptif")
+    st.dataframe(df_raw.describe(), use_container_width=True)
     
-    st.markdown("<br>", unsafe_allow_html=True)
+    # 4. Visualisasi Tren Time Series
+    st.header("4. Visualisasi Tren Time Series")
+    df_forecast = df_raw[['Year', 'gini_disp']].copy()
     
-    # Visualization
-    st.subheader("📈 Visualisasi Trend Gini Coefficient")
-    
-    fig, ax = plt.subplots(figsize=(12, 5))
-    ax.plot(df_raw['Year'], df_raw['gini_disp'], marker='o', color='#00E396', 
-            linewidth=2, markersize=6, label='Gini Coefficient')
-    ax.fill_between(df_raw['Year'], df_raw['gini_disp'], alpha=0.2, color='#00E396')
-    ax.set_xlabel('Year', fontsize=12, color='white')
-    ax.set_ylabel('Gini Coefficient', fontsize=12, color='white')
-    ax.set_title('Trend Gini Coefficient Afrika Selatan', fontsize=14, fontweight='bold', color='white')
+    fig, ax = plt.subplots(figsize=(10,4))
+    ax.plot(df_forecast['Year'], df_forecast['gini_disp'], marker='o', color='#00E396', linewidth=2)
+    ax.set_title("Trend Gini Disposable Income (South Africa)", fontsize=14, fontweight='bold', color='white')
+    ax.set_xlabel("Year", fontsize=12, color='white')
+    ax.set_ylabel("Gini Disposable Income", fontsize=12, color='white')
     ax.set_facecolor('#0E1117')
     fig.patch.set_facecolor('#0E1117')
     ax.tick_params(colors='white')
     ax.grid(True, alpha=0.3)
-    ax.legend()
+    plt.tight_layout()
     st.pyplot(fig)
     
-    # Key Findings
-    col1, col2, col3, col4 = st.columns(4)
-    with col1:
-        st.markdown(f"""
-        <div class='metric-card'>
-            <h3>{df_raw['Year'].min():.0f}</h3>
-            <p>Tahun Awal</p>
-        </div>
-        """, unsafe_allow_html=True)
-    with col2:
-        st.markdown(f"""
-        <div class='metric-card'>
-            <h3>{df_raw['Year'].max():.0f}</h3>
-            <p>Tahun Akhir</p>
-        </div>
-        """, unsafe_allow_html=True)
-    with col3:
-        st.markdown(f"""
-        <div class='metric-card'>
-            <h3>{df_raw['gini_disp'].mean():.4f}</h3>
-            <p>Rata-rata Gini</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown(f"""
-        <div class='metric-card'>
-            <h3>{df_raw['gini_disp'].isna().sum()}</h3>
-            <p>Missing Values (raw)</p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Kualitas Data (Quality Summary)
-    # andi, data under
-    st.subheader("🛠️ Analisis Kualitas Data")
+    # 5. Ringkasan Kualitas Data
+    st.header("5. Ringkasan Kualitas Data")
     
     # Fokus pada variabel utama
     df_q = df_raw[['Year', 'gini_disp']].copy()
@@ -342,31 +298,46 @@ elif menu == "🔍 Data Understanding":
     ].shape[0]
     
     # Tabel ringkasan kualitas data
+    # Tampilkan penjelasan metode IQR
+    st.subheader("📊 Metode Deteksi Outlier: IQR (Interquartile Range)")
+    st.info("""
+    **IQR Method:**
+    - **Q1 (Kuartil 1)**: Persentil ke-25 dari data
+    - **Q3 (Kuartil 3)**: Persentil ke-75 dari data
+    - **IQR**: Q3 - Q1 (jarak antara kuartil)
+    - **Lower Bound**: Q1 - 1.5 × IQR
+    - **Upper Bound**: Q3 + 1.5 × IQR
+    - **Outlier**: Data yang berada di luar batas lower atau upper
+    """)
+    
+    # Tampilkan nilai-nilai perhitungan
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("Q1 (25%)", f"{Q1:.4f}")
+    with col2:
+        st.metric("Q3 (75%)", f"{Q3:.4f}")
+    with col3:
+        st.metric("IQR", f"{IQR:.4f}")
+    with col4:
+        st.metric("Outlier Count", outlier)
+    
+    st.text(f"Lower Bound: {lower:.4f}")
+    st.text(f"Upper Bound: {upper:.4f}")
+    
+    st.markdown("---")
+    
     quality_summary = pd.DataFrame({
-        "Aspek Kualitas Data": ["Missing Value", "Duplikasi Data", "Outlier (IQR Method)"],
-        "Jumlah": [missing_value, duplikasi, outlier],
-        "Status": [
-            "⚠️ Perlu interpolasi" if missing_value > 0 else "✅ Aman",
-            "⚠️ Perlu dedup" if duplikasi > 0 else "✅ Aman",
-            "⚠️ Perlu investigasi" if outlier > 0 else "✅ Aman"
-        ]
+        "Aspek Kualitas Data": ["Missing Value", "Duplikasi Data", "Outlier"],
+        "Jumlah": [missing_value, duplikasi, outlier]
     })
     
-    col_q1, col_q2 = st.columns([1, 1])
+    st.dataframe(quality_summary, use_container_width=True, hide_index=True)
     
-    with col_q1:
-        st.write("Rangkuman Kualitas Data:")
-        st.dataframe(quality_summary, use_container_width=True, hide_index=True)
-    
-    with col_q2:
-        st.info("""
-        **🔍 Penjelasan Metode:**
-        - **Missing Value**: Data kosong yang akan diinterpolasi di tahap Data Preparation.
-        - **Duplikasi**: Baris data yang terulang (identik).
-        - **Outlier**: Data pencilan yang dideteksi menggunakan metode IQR (Interquartile Range).
-          - Lower Bound = Q1 - 1.5 * IQR
-          - Upper Bound = Q3 + 1.5 * IQR
-        """)
+    # Tampilkan kesimpulan
+    if missing_value == 0 and duplikasi == 0 and outlier == 0:
+        st.success("✅ Data dalam kondisi baik! Tidak ada missing value, duplikasi, atau outlier.")
+    else:
+        st.warning(f"⚠️ Ditemukan: {missing_value} missing value, {duplikasi} duplikasi, {outlier} outlier")
 
 # ==================== 3. DATA PREPARATION ====================
 elif menu == "🧹 Data Preparation":
